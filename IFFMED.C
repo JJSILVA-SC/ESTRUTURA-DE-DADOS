@@ -32,6 +32,21 @@ void inserirAluno(Aluno** lista, int matricula, const char* nome, int idade, con
     *lista = novoAluno;
 }
 
+// Função para verificar se a matrícula é válida (só números)
+int lerMatricula() {
+    int matricula;
+    while (1) {
+        printf("Matrícula: ");
+        if (scanf("%d", &matricula) != 1) {
+            // Caso a leitura não seja um número válido (letras ou outros caracteres)
+            printf("Erro: A matrícula deve ser um número válido!\n");
+            while(getchar() != '\n'); // Limpar o buffer do teclado
+        } else {
+            return matricula;  // A matrícula foi lida com sucesso
+        }
+    }
+}
+
 // Função para alterar os dados de um aluno
 void alterarAluno(Aluno* lista, int matricula, const char* novoNome, int novaIdade, const char* novoHistoricoMedico, const char* novaDataAdmissao) {
     Aluno* temp = lista;
@@ -130,8 +145,7 @@ int main() {
         switch (escolha) {
             case 1:
                 printf("\nInserir Novo Aluno na Enfermaria:\n");
-                printf("Matrícula: ");
-                scanf("%d", &matricula);
+                matricula = lerMatricula();  // Usando a função para ler matrícula
                 getchar(); // Limpar o buffer
                 printf("Nome: ");
                 fgets(nome, MAX_NOME, stdin);
@@ -150,8 +164,7 @@ int main() {
 
             case 2:
                 printf("\nAlterar Dados de um Aluno:\n");
-                printf("Matrícula: ");
-                scanf("%d", &matricula);
+                matricula = lerMatricula();  // Usando a função para ler matrícula
                 getchar(); // Limpar o buffer
                 printf("Novo Nome: ");
                 fgets(nome, MAX_NOME, stdin);
@@ -190,4 +203,3 @@ int main() {
     }
     return 0;
 }
-
