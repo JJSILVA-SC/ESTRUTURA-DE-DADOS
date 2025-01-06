@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #define MAX_NOME 100
 #define MAX_HISTORICO 500
 
@@ -9,11 +10,10 @@ typedef struct Aluno {
     char nome[MAX_NOME];
     int idade;
     char historicoMedico[MAX_HISTORICO];
-    char dataAdmissao[11]; // Data de admissão no formato dd/mm/aaaa
-    struct Aluno* prox;  // Ponteiro para o próximo aluno
+    char dataAdmissao[11];
+    struct Aluno* prox;
 } Aluno;
 
-// Função para criar um novo aluno
 Aluno* criarAluno(int matricula, const char* nome, int idade, const char* historicoMedico, const char* dataAdmissao) {
     Aluno* novoAluno = (Aluno*)malloc(sizeof(Aluno));
     novoAluno->matricula = matricula;
@@ -25,29 +25,71 @@ Aluno* criarAluno(int matricula, const char* nome, int idade, const char* histor
     return novoAluno;
 }
 
-// Função para inserir um aluno na lista
 void inserirAluno(Aluno** lista, int matricula, const char* nome, int idade, const char* historicoMedico, const char* dataAdmissao) {
     Aluno* novoAluno = criarAluno(matricula, nome, idade, historicoMedico, dataAdmissao);
     novoAluno->prox = *lista;
     *lista = novoAluno;
 }
 
-// Função para verificar se a matrícula é válida (só números)
 int lerMatricula() {
     int matricula;
     while (1) {
         printf("Matrícula: ");
         if (scanf("%d", &matricula) != 1) {
-            // Caso a leitura não seja um número válido (letras ou outros caracteres)
             printf("Erro: A matrícula deve ser um número válido!\n");
-            while(getchar() != '\n'); // Limpar o buffer do teclado
+            while(getchar() != '\n');
         } else {
-            return matricula;  // A matrícula foi lida com sucesso
+            return matricula;
         }
     }
 }
 
-// Função para alterar os dados de um aluno
+int nomeValido(const char* nome) {
+    for (int i = 0; nome[i] != '\0'; i++) {
+        if (isdigit(nome[i])) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int lerIdade() {
+    int idade;
+    while (1) {
+        printf("Idade: ");
+        if (scanf("%d", &idade) != 1 || idade <= 0) {
+            printf("Erro: A idade deve ser um número inteiro positivo!\n");
+            while(getchar() != '\n');
+        } else {
+            return idade;
+        }
+    }
+}
+
+int dataValida(const char* data) {
+    int dia, mes, ano;
+    if (strlen(data) != 10) {
+        return 0;
+    }
+    if (sscanf(data, "%d/%d/%d", &dia, &mes, &ano) != 3) {
+        return 0;
+    }
+    if (dia < 1 || dia > 31 || mes < 1 || mes > 12 || ano < 1900) {
+        return 0;
+    }
+    if ((mes == 4 || mes == 6 || mes == 9 || mes == 11) && dia > 30) {
+        return 0;
+    }
+    if (mes == 2) {
+        if ((ano % 4 == 0 && ano % 100 != 0) || (ano % 400 == 0)) {
+            if (dia > 29) return 0;
+        } else {
+            if (dia > 28) return 0;
+        }
+    }
+    return 1;
+}
+
 void alterarAluno(Aluno* lista, int matricula, const char* novoNome, int novaIdade, const char* novoHistoricoMedico, const char* novaDataAdmissao) {
     Aluno* temp = lista;
     while (temp != NULL) {
@@ -64,37 +106,27 @@ void alterarAluno(Aluno* lista, int matricula, const char* novoNome, int novaIda
     printf("Aluno com matrícula %d não encontrado.\n", matricula);
 }
 
-// Função para excluir um aluno
 void excluirAluno(Aluno** lista, int matricula) {
     Aluno *temp = *lista, *anterior = NULL;
-
-    // Verifica se o aluno a ser removido está na cabeça da lista
     if (temp != NULL && temp->matricula == matricula) {
         *lista = temp->prox;
         free(temp);
         printf("Aluno com matrícula %d excluído com sucesso.\n", matricula);
         return;
     }
-
-    // Procura o aluno na lista
     while (temp != NULL && temp->matricula != matricula) {
         anterior = temp;
         temp = temp->prox;
     }
-
-    // Se o aluno não for encontrado
     if (temp == NULL) {
         printf("Aluno com matrícula %d não encontrado.\n", matricula);
         return;
     }
-
-    // Desvincula o aluno da lista e o exclui
     anterior->prox = temp->prox;
     free(temp);
     printf("Aluno com matrícula %d excluído com sucesso.\n", matricula);
 }
 
-// Função para listar todos os alunos
 void listarAlunos(Aluno* lista) {
     Aluno* temp = lista;
     if (temp == NULL) {
@@ -113,7 +145,6 @@ void listarAlunos(Aluno* lista) {
     }
 }
 
-// Função para liberar a memória alocada pela lista
 void liberarLista(Aluno* lista) {
     Aluno* temp;
     while (lista != NULL) {
@@ -123,7 +154,6 @@ void liberarLista(Aluno* lista) {
     }
 }
 
-// Função principal
 int main() {
     Aluno* listaAlunos = NULL;
     int escolha, matricula, idade;
@@ -140,51 +170,76 @@ int main() {
         printf("5. Sair\n");
         printf("Escolha uma opção: ");
         scanf("%d", &escolha);
-        getchar(); // Limpar o buffer do teclado
+        getchar();
 
         switch (escolha) {
             case 1:
                 printf("\nInserir Novo Aluno na Enfermaria:\n");
-                matricula = lerMatricula();  // Usando a função para ler matrícula
-                getchar(); // Limpar o buffer
-                printf("Nome: ");
-                fgets(nome, MAX_NOME, stdin);
-                nome[strcspn(nome, "\n")] = 0;  // Remover o '\n' da string
-                printf("Idade: ");
-                scanf("%d", &idade);
-                getchar(); // Limpar o buffer
+                matricula = lerMatricula();
+                getchar();
+                while (1) {
+                    printf("Nome: ");
+                    fgets(nome, MAX_NOME, stdin);
+                    nome[strcspn(nome, "\n")] = 0;
+                    if (nomeValido(nome)) {
+                        break;
+                    } else {
+                        printf("Erro: O nome não pode conter números. Tente novamente.\n");
+                    }
+                }
+                idade = lerIdade();
+                getchar();
                 printf("Histórico Médico: ");
                 fgets(historicoMedico, MAX_HISTORICO, stdin);
                 historicoMedico[strcspn(historicoMedico, "\n")] = 0;
-                printf("Data de Admissão (dd/mm/aaaa): ");
-                fgets(dataAdmissao, 11, stdin);
-                dataAdmissao[strcspn(dataAdmissao, "\n")] = 0;
+                while (1) {
+                    printf("Data de Admissão (dd/mm/aaaa): ");
+                    fgets(dataAdmissao, 11, stdin);
+                    dataAdmissao[strcspn(dataAdmissao, "\n")] = 0;
+                    if (dataValida(dataAdmissao)) {
+                        break;
+                    } else {
+                        printf("Erro: Data inválida! O formato deve ser dd/mm/aaaa.\n");
+                    }
+                }
                 inserirAluno(&listaAlunos, matricula, nome, idade, historicoMedico, dataAdmissao);
                 break;
 
             case 2:
                 printf("\nAlterar Dados de um Aluno:\n");
-                matricula = lerMatricula();  // Usando a função para ler matrícula
-                getchar(); // Limpar o buffer
-                printf("Novo Nome: ");
-                fgets(nome, MAX_NOME, stdin);
-                nome[strcspn(nome, "\n")] = 0;  // Remover o '\n' da string
-                printf("Nova Idade: ");
-                scanf("%d", &idade);
-                getchar(); // Limpar o buffer
+                matricula = lerMatricula();
+                getchar();
+                while (1) {
+                    printf("Novo Nome: ");
+                    fgets(nome, MAX_NOME, stdin);
+                    nome[strcspn(nome, "\n")] = 0;
+                    if (nomeValido(nome)) {
+                        break;
+                    } else {
+                        printf("Erro: O nome não pode conter números. Tente novamente.\n");
+                    }
+                }
+                idade = lerIdade();
+                getchar();
                 printf("Novo Histórico Médico: ");
                 fgets(historicoMedico, MAX_HISTORICO, stdin);
                 historicoMedico[strcspn(historicoMedico, "\n")] = 0;
-                printf("Nova Data de Admissão (dd/mm/aaaa): ");
-                fgets(dataAdmissao, 11, stdin);
-                dataAdmissao[strcspn(dataAdmissao, "\n")] = 0;
+                while (1) {
+                    printf("Nova Data de Admissão (dd/mm/aaaa): ");
+                    fgets(dataAdmissao, 11, stdin);
+                    dataAdmissao[strcspn(dataAdmissao, "\n")] = 0;
+                    if (dataValida(dataAdmissao)) {
+                        break;
+                    } else {
+                        printf("Erro: Data inválida! O formato deve ser dd/mm/aaaa.\n");
+                    }
+                }
                 alterarAluno(listaAlunos, matricula, nome, idade, historicoMedico, dataAdmissao);
                 break;
 
             case 3:
                 printf("\nExcluir Aluno:\n");
-                printf("Matrícula: ");
-                scanf("%d", &matricula);
+                matricula = lerMatricula();
                 excluirAluno(&listaAlunos, matricula);
                 break;
 
